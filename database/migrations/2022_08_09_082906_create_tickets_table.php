@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->id();
                 $table->string('title');
                 $table->enum('status', ['open', 'closed', 'awaiting-response', 'resolved']);
-                $table->enum('channel', ['sms', 'voice']);
+                $table->enum('notification_method', ['sms', 'voice']);
                 $table->timestamps();
             });
         }

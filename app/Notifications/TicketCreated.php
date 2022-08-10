@@ -2,11 +2,10 @@
 
 namespace App\Notifications;
 
-use App\Models\Ticket;
 use App\Models\TicketEntry;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
 
 class TicketCreated extends Notification
@@ -36,18 +35,10 @@ class TicketCreated extends Notification
         return ['vonage'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
-     */
-    public function toMail($notifiable)
+    public function toVonage($notifiable)
     {
-        return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+        return (new VonageMessage())
+            ->content($this->ticketEntry->content);
     }
 
     /**

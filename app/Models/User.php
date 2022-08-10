@@ -20,6 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone_number'
     ];
 
     /**
@@ -51,5 +52,16 @@ class User extends Authenticatable
 
         // Fetch the actual ticket
         return $latestTicketEntry->ticket()->first();
+    }
+
+    /**
+     * Route notifications for the Vonage channel.
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return string
+     */
+    public function routeNotificationForVonage($notification)
+    {
+        return $this->phone_number;
     }
 }

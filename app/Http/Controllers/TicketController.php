@@ -6,8 +6,11 @@ use App\Models\Ticket;
 use App\Models\TicketEntry;
 use App\Models\TicketSubscription;
 use App\Models\User;
+use App\Notifications\TicketCreated;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification as NotificationFacade;
 
 class TicketController extends Controller
 {
@@ -35,17 +38,18 @@ class TicketController extends Controller
             'title' => 'required',
             'content' => 'required',
             'recipient' => 'required|exists:users,id',
-            'channel' => 'required',
+            'notification_method' => 'required',
+            'channel' => 'required'
         ]);
 
         $ticket = Ticket::create([
             'title' => $validatedRequestData['title'],
-            'status' => 'open',
-            'channel' => $validatedRequestData['channel']
+            'status' => 'open'
         ]);
 
         $ticketEntry = new TicketEntry([
             'content' => $validatedRequestData['content'],
+            'channel' => $validatedRequestData['channel'],
         ]);
 
         $ticketEntry->user()->associate(Auth::user());
@@ -56,6 +60,13 @@ class TicketController extends Controller
         $ticketSubscription->user()->associate(User::find($validatedRequestData['recipient']));
         $ticketSubscription->ticket()->associate($ticketEntry);
         $ticketSubscription->save();
+
+        if ($validatedRequestData['notification_method'] === 'sms') {
+            NotificationFacade::send(
+                $ticket->subscribedUsers()->get(),
+                new TicketCreated($ticketEntry)
+            );
+        }
 
         return view('dashboard', ['tickets' => Ticket::all()]);
     }

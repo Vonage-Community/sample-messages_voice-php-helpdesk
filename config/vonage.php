@@ -14,6 +14,7 @@ return [
 
     'api_key'    => function_exists('env') ? env('VONAGE_KEY', '') : '',
     'api_secret' => function_exists('env') ? env('VONAGE_SECRET', '') : '',
+    'sms_from' => function_exists('env') ? env('VONAGE_SMS_FROM', '') : '',
 
     /*
     |--------------------------------------------------------------------------

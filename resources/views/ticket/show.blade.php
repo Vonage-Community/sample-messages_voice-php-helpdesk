@@ -4,16 +4,17 @@
             {{ __('Dashboard') }}
         </h2>
     </x-slot>
-
+    <a href="{{ route('ticket.index') }}"><< Back</a>
     <div class="py-12">
         <div class="container">
             <div class="row">
                 <div class="panel panel-default">
-                    <div class="panel-heading"># {{ $ticket->id }} / {{ $ticket->status }} / {{ $ticket->channel }} / {{ $ticket->title }}</div>
+                    <div class="panel-heading"># {{ $ticket->id }} / {{ $ticket->status }} / {{ $ticket->notification_method }} / {{ $ticket->title }}</div>
                     <div class="panel-body">
                         @forelse ($ticket->entries as $entry)
                             <strong>
                                 {{ $entry->user->email }} /
+                                {{ $entry->channel }} /
                                 {{ $entry->created_at->diffForHumans() }}
                             </strong>
                             <p>{{ $entry->content }}</p>

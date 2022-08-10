@@ -19,6 +19,7 @@ return new class extends Migration
                 $table->integer('ticket_id');
                 $table->integer('user_id');
                 $table->text('content');
+                $table->enum('channel', ['sms', 'web', 'voice']);
                 $table->timestamps();
             });
         }
