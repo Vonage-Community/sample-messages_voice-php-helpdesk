@@ -27,20 +27,6 @@
                                 <input type="text" id="title" name="title">
                                 <label for="content">Content</label>
                                 <input type="text" id="content" name="content">
-                                <label for="recipient">Recipient</label>
-                                <input type="text" id="recipient" name="recipient">
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" name="notification_method" value="sms">
-                                        SMS
-                                    </label>
-                                </div>
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" name="notification_method" value="voice">
-                                        Voice
-                                    </label>
-                                </div>
                                 <input type="hidden" id="channel" name="channel" value="web">
                                 <input type="submit">
                         </form>

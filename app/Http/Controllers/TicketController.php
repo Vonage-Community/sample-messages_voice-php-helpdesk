@@ -46,11 +46,14 @@ class TicketController extends Controller
         $ticketEntry->ticket()->associate($ticket);
         $ticketEntry->save();
 
-        if ($ticket->notification_method === 'sms') {
-            NotificationFacade::send(
-                $ticket->subscribedUsers()->get(),
-                new TicketUpdateNotification($ticketEntry)
-            );
+        // If this is not my ticket, I need to notifiy its creator
+        if (!$ticket->user()->get()->id() === Auth::id()) {
+            if ($ticket->notification_method === 'sms') {
+                NotificationFacade::send(
+                    $ticket->user()->get(),
+                    new TicketUpdateNotification($ticketEntry)
+                );
+            }
         }
 
         return redirect()->route('ticket.show', [$ticket]);
@@ -62,7 +65,6 @@ class TicketController extends Controller
         $validatedRequestData = $request->validate([
             'title' => 'required',
             'content' => 'required',
-            'recipient' => 'required|exists:users,id',
             'channel' => 'required'
         ]);
 
@@ -76,16 +78,10 @@ class TicketController extends Controller
             'channel' => $validatedRequestData['channel'],
         ]);
 
-        $ticketEntry->user()->associate(Auth::user());
+        $user = Auth::user();
+        $ticketEntry->user()->associate($user);
         $ticketEntry->ticket()->associate($ticket);
         $ticketEntry->save();
-
-        if ($validatedRequestData['notification_method'] === 'sms') {
-            NotificationFacade::send(
-                Auth::user(),
-                new TicketUpdateNotification($ticketEntry)
-            );
-        }
 
         return view('dashboard', ['tickets' => Ticket::all()]);
     }
