@@ -4,11 +4,10 @@ namespace App\Notifications;
 
 use App\Models\TicketEntry;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
 
-class TicketCreated extends Notification
+class TicketUpdateNotification extends Notification
 {
     use Queueable;
 

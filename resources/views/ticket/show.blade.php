@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
     <a href="{{ route('ticket.index') }}"><< Back</a>
-    <div class="py-12">
+    <div class="py-3 px-8">
         <div class="container">
             <div class="row">
                 <div class="panel panel-default">
@@ -24,17 +24,17 @@
                         @endforelse
                     </div>
 
-                    @if ($ticket)
                         <div class="panel-body">
-                            <form action=""  method="POST" id="add-reply">
+                            <form action={{ route('ticket.update', $ticket->id) }} method="POST" id="add-reply">
+                                @csrf
                                 <div class="form-group">
                                     <label for="reply">Add a reply</label>
-                                    <textarea class="form-control" id="reply" rows="3"></textarea>
+                                    <textarea name="content" id="reply"></textarea>
+                                    <input type="hidden" name="channel" value="web">
                                 </div>
-                                <button type="submit" class="btn btn-primary mb-2" style="display:none;" id="reply-submit">Save</button>
+                                <input type="submit">
                             </form>
                         </div>
-                    @endif
                 </div>
             </div>
         </div>

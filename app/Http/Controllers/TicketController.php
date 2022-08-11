@@ -6,9 +6,8 @@ use App\Models\Ticket;
 use App\Models\TicketEntry;
 use App\Models\TicketSubscription;
 use App\Models\User;
-use App\Notifications\TicketCreated;
+use App\Notifications\TicketUpdateNotification;
 use Illuminate\Http\Request;
-use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 
@@ -29,6 +28,32 @@ class TicketController extends Controller
         return view('ticket.show', [
             'ticket' => $ticket
         ]);
+    }
+
+    public function update(Ticket $ticket, Request $request)
+    {
+        $validatedRequestData = $request->validate([
+            'content' => 'required',
+            'channel' => 'required'
+        ]);
+
+        $ticketEntry = new TicketEntry([
+            'content' => $validatedRequestData['content'],
+            'channel' => $validatedRequestData['channel'],
+        ]);
+
+        $ticketEntry->user()->associate(Auth::user());
+        $ticketEntry->ticket()->associate($ticket);
+        $ticketEntry->save();
+
+        if ($ticket->notification_method === 'sms') {
+            NotificationFacade::send(
+                $ticket->subscribedUsers()->get(),
+                new TicketUpdateNotification($ticketEntry)
+            );
+        }
+
+        return redirect()->route('ticket.show', [$ticket]);
     }
 
     public function store(Request $request)
@@ -64,7 +89,7 @@ class TicketController extends Controller
         if ($validatedRequestData['notification_method'] === 'sms') {
             NotificationFacade::send(
                 $ticket->subscribedUsers()->get(),
-                new TicketCreated($ticketEntry)
+                new TicketUpdateNotification($ticketEntry)
             );
         }
 
