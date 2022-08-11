@@ -53,6 +53,25 @@
                          name="phone_number" required />
             </div>
 
+            <div class="mt-4">
+                <x-label for="notification_method" :value="__('Notification Method')" />
+
+                <x-label for="notification_web" :value="__('Web Only')" />
+                <x-input id="notification_web" class="block mt-1"
+                         type="radio"
+                         name="notification_method" value="web" />
+
+                <x-label for="notification_web" :value="__('Voice')" />
+                <x-input id="notification_voice" class="block mt-1"
+                         type="radio"
+                         name="notification_method" value="voice" />
+
+                <x-label for="notification_sms" :value="__('SMS')" />
+                <x-input id="notification_sms" class="block mt-1"
+                         type="radio"
+                         name="notification_method" value="sms" />
+            </div>
+
             <div class="flex items-center justify-end mt-4">
                 <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('login') }}">
                     {{ __('Already registered?') }}

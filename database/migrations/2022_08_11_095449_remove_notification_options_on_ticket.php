@@ -13,9 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('users','notification_method')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->enum('notification_method', ['web', 'voice', 'sms']);
+        if (Schema::hasColumn('tickets', 'notification_method')) {
+            Schema::table('tickets', function (Blueprint $table) {
+                $table->dropColumn('notification_method');
             });
         }
     }
@@ -27,9 +27,9 @@ return new class extends Migration
      */
     public function down()
     {
-        if (Schema::hasColumn('users', 'notification_method')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->dropColumn('notification_method');
+        if (!Schema::hasColumn('tickets', 'notification_method')) {
+            Schema::table('tickets', function (Blueprint $table) {
+                $table->enum('notification_method', ['sms', 'voice']);
             });
         }
     }

@@ -20,7 +20,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'phone_number'
+        'phone_number',
+        'notification_method'
     ];
 
     /**
@@ -41,18 +42,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    public function latestTicketWithActivity()
-    {
-        // Get all tickets this user is watching
-        $watchedTickets = TicketSubscription::select('ticket_id')->where('user_id', $this->id)->get()->pluck('ticket_id');
-
-        // Grab the latest ticket with activity that's in this list
-        $latestTicketEntry = TicketEntry::select("ticket_id")->whereIn('ticket_id', $watchedTickets)->orderBy('created_at', 'desc')->limit(1)->first();
-
-        // Fetch the actual ticket
-        return $latestTicketEntry->ticket()->first();
-    }
 
     /**
      * Route notifications for the Vonage channel.

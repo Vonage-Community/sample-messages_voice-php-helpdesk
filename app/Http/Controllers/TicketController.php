@@ -63,7 +63,6 @@ class TicketController extends Controller
             'title' => 'required',
             'content' => 'required',
             'recipient' => 'required|exists:users,id',
-            'notification_method' => 'required',
             'channel' => 'required'
         ]);
 
@@ -81,14 +80,9 @@ class TicketController extends Controller
         $ticketEntry->ticket()->associate($ticket);
         $ticketEntry->save();
 
-        $ticketSubscription = new TicketSubscription();
-        $ticketSubscription->user()->associate(User::find($validatedRequestData['recipient']));
-        $ticketSubscription->ticket()->associate($ticketEntry);
-        $ticketSubscription->save();
-
         if ($validatedRequestData['notification_method'] === 'sms') {
             NotificationFacade::send(
-                $ticket->subscribedUsers()->get(),
+                Auth::user(),
                 new TicketUpdateNotification($ticketEntry)
             );
         }
