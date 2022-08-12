@@ -13,8 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('ticket', 'user_id')) {
-            Schema::table('ticket', function (Blueprint $table) {
+        if (!Schema::hasColumn('tickets', 'user_id')) {
+            Schema::table('tickets', function (Blueprint $table) {
                 $table->integer('user_id');
             });
         }
@@ -27,7 +27,7 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('ticket', function (Blueprint $table) {
+        Schema::table('tickets', function (Blueprint $table) {
             $table->dropIfExists('user_id');
         });
     }

@@ -53,4 +53,14 @@ class User extends Authenticatable
     {
         return $this->phone_number;
     }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function latestTicket()
+    {
+        return $this->tickets()->latest()->get()->first();
+    }
 }

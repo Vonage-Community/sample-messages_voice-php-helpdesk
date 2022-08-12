@@ -18,7 +18,7 @@ class IncomingSmsTicketController extends Controller
             throw new \Exception('Could not parse SMS webhook, cannot find user');
         }
 
-        $ticket = $user->latestTicketWithActivity();
+        $ticket = $user->latestTicket();
 
         $entry = new TicketEntry([
             'content' => $request->text,

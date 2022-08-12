@@ -46,9 +46,11 @@ class TicketController extends Controller
         $ticketEntry->ticket()->associate($ticket);
         $ticketEntry->save();
 
+        $userTicket = $ticket->user()->get()->first();
+
         // If this is not my ticket, I need to notifiy its creator
-        if (!$ticket->user()->get()->id() === Auth::id()) {
-            if ($ticket->notification_method === 'sms') {
+        if ($userTicket->id !== Auth::id()) {
+            if ($userTicket->notification_method === 'sms') {
                 NotificationFacade::send(
                     $ticket->user()->get(),
                     new TicketUpdateNotification($ticketEntry)
@@ -70,7 +72,8 @@ class TicketController extends Controller
 
         $ticket = Ticket::create([
             'title' => $validatedRequestData['title'],
-            'status' => 'open'
+            'status' => 'open',
+            'user_id' => Auth::id()
         ]);
 
         $ticketEntry = new TicketEntry([
