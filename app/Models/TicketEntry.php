@@ -17,4 +17,9 @@ class TicketEntry extends Model
     {
         return $this->belongsTo(Ticket::class);
     }
+
+    public function recordings()
+    {
+        return $this->hasMany(TicketRecording::class, 'ticket_entry_id', 'id');
+    }
 }
