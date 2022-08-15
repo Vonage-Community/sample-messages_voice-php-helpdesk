@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Vonage\Laravel\Facade\Vonage;
 use Vonage\Messages\Channel\SMS\SMSText;
+use Vonage\Messages\Channel\Viber\ViberText;
+use Vonage\Messages\Channel\WhatsApp\WhatsAppText;
 use Vonage\Voice\Endpoint\Phone;
 use Vonage\Voice\OutboundCall;
 use Vonage\Voice\Webhook;
@@ -52,6 +54,7 @@ class TicketController extends Controller
 
         // If this is not my ticket, I need to notify its creator
         if ($userTicket->id !== Auth::id()) {
+
             if ($userTicket->notification_method === 'sms') {
                 $sms = new SMSText(
                     $userTicket->phone_number,
@@ -61,6 +64,27 @@ class TicketController extends Controller
                 $client = app(Client::class);
                 $client->messages()->send($sms);
             }
+
+            if ($userTicket->notification_method === 'whatsapp') {
+                $sms = new WhatsAppText(
+                    $userTicket->phone_number,
+                    config('vonage.sms_from'),
+                    $ticketEntry->content
+                );
+                $client = app(Client::class);
+                $client->messages()->send($sms);
+            }
+
+            if ($userTicket->notification_method === 'viber') {
+                $sms = new ViberText(
+                    $userTicket->phone_number,
+                    config('vonage.sms_from'),
+                    $ticketEntry->content
+                );
+                $client = app(Client::class);
+                $client->messages()->send($sms);
+            }
+
             if ($userTicket->notification_method === 'voice') {
                 $currentHost = env('PUBLIC_URL', url('/'));
                 $outboundCall = new OutboundCall(
@@ -87,8 +111,11 @@ class TicketController extends Controller
         $validatedRequestData = $request->validate([
             'title' => 'required',
             'content' => 'required',
-            'channel' => 'required'
+            'channel' => 'required',
         ]);
+
+        // If it's conversation api, we need to do some different things
+
 
         $ticket = Ticket::create([
             'title' => $validatedRequestData['title'],

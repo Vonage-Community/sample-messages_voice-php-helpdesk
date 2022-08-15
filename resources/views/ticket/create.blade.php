@@ -23,11 +23,17 @@
                         @endif
                         <form method="POST" action="{{ route('ticket.create') }}">
                             @csrf
-                                <label for="title">Title</label>
-                                <input type="text" id="title" name="title">
-                                <label for="content">Content</label>
-                                <input type="text" id="content" name="content">
-                                <input type="hidden" id="channel" name="channel" value="web">
+                                <fieldset>
+                                    <label for="title">Title</label>
+                                    <input type="text" id="title" name="title">
+                                    <label for="content">Content</label>
+                                    <input type="text" id="content" name="content">
+                                    <input type="hidden" id="channel" name="channel" value="web">
+                                </fieldset>
+                                <fieldset>
+                                    <label for="isConversation">In-App Messaging</label>
+                                    <input type="checkbox" id="isConversation" name="isConversation" value="conversation">
+                                </fieldset>
                                 <input type="submit">
                         </form>
                     </div>

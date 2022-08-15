@@ -28,7 +28,6 @@ Route::post('/tickets/webhook', [IncomingSmsTicketController::class, 'store'])->
 Route::post('tickets/update/{ticket:id}', [TicketController::class, 'update'])->name('ticket.update');
 
 Route::post('/webhook/answer/{ticketEntry:id}', [WebhookController::class, 'answer'])->name('voice.answer');
-Route::post('/webhook/event', [WebhookController::class, 'event'])->name('voice.event');
 Route::post('/webhook/recordings/{ticketEntry:id}', [WebhookController::class, 'recording'])->name('voice.recording');
 
 require __DIR__.'/auth.php';

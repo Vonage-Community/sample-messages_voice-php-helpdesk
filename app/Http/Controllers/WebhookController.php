@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\TicketEntry;
+use GuzzleHttp\Client;
+use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Ticket;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Vonage\Laravel\Facade\Vonage;
 
 class WebhookController extends Controller
@@ -45,78 +48,62 @@ class WebhookController extends Controller
     public function recording(TicketEntry $ticketEntry, Request $request)
     {
         $params = $request->all();
+
         Log::info('Recording event', $params);
-        if (isset($params['recording_url'])) {
-            if ($voiceResponse = $this->transcribeRecording($params['recording_url'])) {
 
-                $entry = new TicketEntry([
-                    'content' => $voiceResponse,
-                    'channel' => 'voice',
-                ]);
+        $newTicketEntry = new TicketEntry([
+            'content' => $this->transcribeRecording($params['recording_url']),
+            'channel' => 'voice',
+        ]);
 
-                error_log(print_r($entry, true));
+        $parentTicket = $ticketEntry->ticket()->get()->first();
+        $newTicketEntryUser = $parentTicket->user()->get()->first();
+        $newTicketEntry->user()->associate($newTicketEntryUser);
+        $newTicketEntry->ticket()->associate($parentTicket);
+        $newTicketEntry->save();
 
-                $entry->user()->associate($ticketEntry->user()->first());
-                $entry->ticket()->associate($ticketEntry->ticket()->first());
-                $entry->save();
-            }
-        }
-        return response('', 204);
-    }
-
-    public function event(Request $request) {
-        $params = $request->all();
-        Log::info('Call event', $params);
-        if (isset($params['recording_url'])) {
-            if ($voiceResponse = $this->transcribeRecording($params['recording_url'])) {
-
-                $ticket = Ticket::all()->last();
-                $user = $ticket->subscribedUsers()->first();
-
-                $entry = new TicketEntry([
-                    'content' => $voiceResponse,
-                    'channel' => 'voice',
-                ]);
-
-                error_log(print_r($entry, true));
-
-                $entry->user()->associate($user);
-                $entry->ticket()->associate($ticket);
-                $entry->save();
-            }
-        }
         return response('', 204);
     }
 
     public function transcribeRecording($recordingUrl)
     {
+        $filename = Str::random(10);
         $audio = Vonage::get($recordingUrl)->getBody();
-//
-//        $client = new \GuzzleHttp\Client([
-//            'base_uri' => 'https://stream.watsonplatform.net/'
-//        ]);
-//
-//        $transcriptionResponse = $client->request('POST', 'speech-to-text/api/v1/recognize', [
-//            'auth' => ['apikey', env('IBM_API_KEY')],
-//            'headers' => [
-//                'Content-Type' => 'audio/mpeg',
-//            ],
-//            'body' => $audio
-//        ]);
-//
-//        if ($transcriptionResponse->getStatusCode() != 200) {
-//            Log::error('Transcription service failed, check your credentials');
-//            return false;
-//        }
-//
-//        $transcription = json_decode($transcriptionResponse->getBody());
-//
-//        $voiceResponse = '';
-//        foreach ($transcription->results as $result) {
-//            $voiceResponse .= $result->alternatives[0]->transcript.' ';
-//        }
-//
-//        Log::info('Voice Response', [$voiceResponse]);
-        return 'test transcription';
+        Storage::put('public/' . $filename . '.mp3', $audio);
+
+        $client = new Client([
+            'base_uri' => 'https://api.deepgram.com/v1/'
+        ]);
+        Log::info('About to make Deepgram call');
+
+        $transcriptionResponse = $client->request(
+            'POST',
+            'listen?punctuate=true',
+            [
+                'headers' => [
+                    'Authorization' => 'Token ' . env('DEEPGRAM_API_SECRET'),
+                    'Content-Type' => 'application/json',
+                ],
+                'body' => json_encode(
+                    [
+                        'url' => env('PUBLIC_URL') . '/storage/' . $filename . '.mp3'
+                    ], JSON_THROW_ON_ERROR
+                )
+        ]);
+
+        Log::info('Made Deepgram call');
+
+        if ($transcriptionResponse->getStatusCode() !== 200) {
+            Log::error('Transcription service failed, check your credentials');
+            return false;
+        }
+
+        $transcriptionResponseBody = json_decode($transcriptionResponse->getBody(), true);
+        $transcription = $transcriptionResponseBody['results']['channels'][0]['alternatives'][0]['transcript'];
+
+        Log::info('Voice Response', [$transcription]);
+        Storage::delete('public/' . $filename . '.mp3');
+
+        return $transcription;
     }
 }
