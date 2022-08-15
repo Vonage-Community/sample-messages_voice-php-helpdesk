@@ -10,8 +10,8 @@ use Vonage\Laravel\Facade\Vonage;
 
 class WebhookController extends Controller
 {
-    public function answer(TicketEntry $ticket) {
-        if (!$ticket->exists) {
+    public function answer(TicketEntry $ticketEntry) {
+        if (!$ticketEntry->exists) {
             return response()->json([
                 [
                     'action' => 'talk',
@@ -23,24 +23,45 @@ class WebhookController extends Controller
         return response()->json([
             [
                 'action' => 'talk',
-                'text' => $ticket->content
+                'text' => $ticketEntry->content,
             ],
             [
                 'action' => 'talk',
                 'text' => 'To add a reply, please leave a message after the beep, then press the pound key',
-                'voiceName' => 'Brian'
             ],
             [
-                "action" => "record",
-                "endOnKey" => "#",
-                "beepStart" => true
+                'action'    => 'record',
+                'endOnKey'  => '#',
+                'beepStart' => true,
+                'eventUrl' => [env('PUBLIC_URL') . '/webhook/recordings/' .  $ticketEntry->id]
             ],
             [
                 'action' => 'talk',
-                'text' => 'Thank you very much. Goodbye.',
-                'voiceName' => 'Brian'
+                'text' => 'Thank you, your ticket has been updated.',
             ]
         ]);
+    }
+
+    public function recording(TicketEntry $ticketEntry, Request $request)
+    {
+        $params = $request->all();
+        Log::info('Recording event', $params);
+        if (isset($params['recording_url'])) {
+            if ($voiceResponse = $this->transcribeRecording($params['recording_url'])) {
+
+                $entry = new TicketEntry([
+                    'content' => $voiceResponse,
+                    'channel' => 'voice',
+                ]);
+
+                error_log(print_r($entry, true));
+
+                $entry->user()->associate($ticketEntry->user()->first());
+                $entry->ticket()->associate($ticketEntry->ticket()->first());
+                $entry->save();
+            }
+        }
+        return response('', 204);
     }
 
     public function event(Request $request) {
@@ -67,34 +88,35 @@ class WebhookController extends Controller
         return response('', 204);
     }
 
-    public function transcribeRecording($recordingUrl) {
+    public function transcribeRecording($recordingUrl)
+    {
         $audio = Vonage::get($recordingUrl)->getBody();
-
-        $client = new \GuzzleHttp\Client([
-            'base_uri' => 'https://stream.watsonplatform.net/'
-        ]);
-
-        $transcriptionResponse = $client->request('POST', 'speech-to-text/api/v1/recognize', [
-            'auth' => ['apikey', env('IBM_API_KEY')],
-            'headers' => [
-                'Content-Type' => 'audio/mpeg',
-            ],
-            'body' => $audio
-        ]);
-
-        if ($transcriptionResponse->getStatusCode() != 200) {
-            Log::error('Transcription service failed, check your credentials');
-            return false;
-        }
-
-        $transcription = json_decode($transcriptionResponse->getBody());
-
-        $voiceResponse = '';
-        foreach ($transcription->results as $result) {
-            $voiceResponse .= $result->alternatives[0]->transcript.' ';
-        }
-
-        Log::info('Voice Response', [$voiceResponse]);
-        return $voiceResponse;
+//
+//        $client = new \GuzzleHttp\Client([
+//            'base_uri' => 'https://stream.watsonplatform.net/'
+//        ]);
+//
+//        $transcriptionResponse = $client->request('POST', 'speech-to-text/api/v1/recognize', [
+//            'auth' => ['apikey', env('IBM_API_KEY')],
+//            'headers' => [
+//                'Content-Type' => 'audio/mpeg',
+//            ],
+//            'body' => $audio
+//        ]);
+//
+//        if ($transcriptionResponse->getStatusCode() != 200) {
+//            Log::error('Transcription service failed, check your credentials');
+//            return false;
+//        }
+//
+//        $transcription = json_decode($transcriptionResponse->getBody());
+//
+//        $voiceResponse = '';
+//        foreach ($transcription->results as $result) {
+//            $voiceResponse .= $result->alternatives[0]->transcript.' ';
+//        }
+//
+//        Log::info('Voice Response', [$voiceResponse]);
+        return 'test transcription';
     }
 }

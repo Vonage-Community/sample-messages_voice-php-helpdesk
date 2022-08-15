@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Ticket;
 use App\Models\TicketEntry;
-use App\Models\TicketSubscription;
-use App\Models\User;
-use App\Notifications\TicketUpdateNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification as NotificationFacade;
+use Vonage\Laravel\Facade\Vonage;
+use Vonage\Messages\Channel\SMS\SMSText;
+use Vonage\Voice\Endpoint\Phone;
+use Vonage\Voice\OutboundCall;
+use Vonage\Voice\Webhook;
+use Vonage\Client;
 
 class TicketController extends Controller
 {
@@ -48,13 +50,31 @@ class TicketController extends Controller
 
         $userTicket = $ticket->user()->get()->first();
 
-        // If this is not my ticket, I need to notifiy its creator
+        // If this is not my ticket, I need to notify its creator
         if ($userTicket->id !== Auth::id()) {
             if ($userTicket->notification_method === 'sms') {
-                NotificationFacade::send(
-                    $ticket->user()->get(),
-                    new TicketUpdateNotification($ticketEntry)
+                $sms = new SMSText(
+                    $userTicket->phone_number,
+                    config('vonage.sms_from'),
+                    $ticketEntry->content
                 );
+                $client = app(Client::class);
+                $client->messages()->send($sms);
+            }
+            if ($userTicket->notification_method === 'voice') {
+                $currentHost = env('PUBLIC_URL', url('/'));
+                $outboundCall = new OutboundCall(
+                    new Phone($userTicket->phone_number),
+                    new Phone(config('vonage.sms_from'))
+                );
+                $outboundCall
+                    ->setAnswerWebhook(
+                        new Webhook($currentHost . '/webhook/answer/' . $ticketEntry->id)
+                    )
+                    ->setEventWebhook(
+                        new Webhook($currentHost . '/webhook/event/' . $ticketEntry->id)
+                    );
+                Vonage::voice()->createOutboundCall($outboundCall);
             }
         }
 
