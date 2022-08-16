@@ -29,6 +29,12 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket)
     {
+        if ($ticket->type = 'realtime') {
+            return view('ticket.realtime', [
+                'ticket' => $ticket
+            ]);
+        }
+
         return view('ticket.show', [
             'ticket' => $ticket
         ]);
@@ -112,14 +118,27 @@ class TicketController extends Controller
             'title' => 'required',
             'content' => 'required',
             'channel' => 'required',
+            'isConversation' => 'nullable'
         ]);
 
         // If it's conversation api, we need to do some different things
+        if (array_key_exists('isConversation', $validatedRequestData)) {
+            $ticket = Ticket::create([
+                'title' => $validatedRequestData['title'],
+                'status' => 'open',
+                'type' => 'realtime',
+                'user_id' => Auth::id()
+            ]);
 
+            $ticket->save();
+
+            return redirect()->route('ticket.show', $ticket->id);
+        }
 
         $ticket = Ticket::create([
             'title' => $validatedRequestData['title'],
             'status' => 'open',
+            'type' => 'sync',
             'user_id' => Auth::id()
         ]);
 

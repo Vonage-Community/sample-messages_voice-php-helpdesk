@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessRecordings;
+use App\Jobs\ProcessRecording;
 use App\Models\TicketEntry;
 use App\Models\TicketRecording;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -53,15 +54,53 @@ class WebhookController extends Controller
 
         $filename = Str::random(10);
         $audio = Vonage::get($params['recording_url'])->getBody();
-        Storage::put('public/' . $filename . '.mp3', $audio);
 
-        $ticketRecording = new TicketRecording([
-            'ticket_entry_id' => $ticketEntry->id,
-            'fileName' => $filename
+//        Storage::put('public/' . $filename . '.mp3', $audio);
+        $ticketContent = $this->transcribeRecording($audio);
+
+        $newTicketEntry = new TicketEntry([
+            'content' => $ticketContent,
+            'channel' => 'voice',
         ]);
 
-        $ticketRecording->save();
+        $parentTicket = $ticketEntry->ticket()->get()->first();
+        $newTicketEntryUser = $parentTicket->user()->get()->first();
+        $newTicketEntry->user()->associate($newTicketEntryUser);
+        $newTicketEntry->ticket()->associate($parentTicket);
+        $newTicketEntry->save();
 
         return response('', 204);
+    }
+
+    public function transcribeRecording($audio)
+    {
+        $client = new Client([
+            'base_uri' => 'https://api.deepgram.com/v1/'
+        ]);
+
+        $transcriptionResponse = $client->request(
+            'POST',
+            'listen?punctuate=true',
+            [
+                'headers' => [
+                    'Authorization' => 'Token ' . env('DEEPGRAM_API_SECRET'),
+                    'Content-Type' => 'audio/mpeg',
+                ],
+                'body' => $audio
+            ]);
+
+        if ($transcriptionResponse->getStatusCode() !== 200) {
+            Log::error('Transcription service failed, check your credentials');
+            return false;
+        }
+
+        $transcriptionResponseBody = json_decode($transcriptionResponse->getBody(), true);
+        Log::info($transcriptionResponseBody);
+        $transcription = $transcriptionResponseBody['results']['channels'][0]['alternatives'][0]['transcript'];
+
+        Log::info('Voice Response', [$transcription]);
+        Storage::delete('public/' . $filename . '.mp3');
+
+        return $transcription;
     }
 }

@@ -32,7 +32,7 @@
                                 </fieldset>
                                 <fieldset>
                                     <label for="isConversation">In-App Messaging</label>
-                                    <input type="checkbox" id="isConversation" name="isConversation" value="conversation">
+                                    <input type="checkbox" id="isConversation" name="isConversation">
                                 </fieldset>
                                 <input type="submit">
                         </form>
