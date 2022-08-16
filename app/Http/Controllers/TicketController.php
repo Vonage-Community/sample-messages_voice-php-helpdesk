@@ -31,7 +31,7 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket)
     {
-        if ($ticket->type = 'realtime') {
+        if ($ticket->type === 'realtime') {
             return view('ticket.realtime', [
                 'ticket' => $ticket
             ]);
@@ -155,14 +155,14 @@ class TicketController extends Controller
             $ticket->save();
 
             // Add the super admin and this user to the conversation
-            Vonage::post('https://api.nexmo.com/v0.3/conversations/' . $ticket->capi_conversation_id . 'members', [
+            Vonage::post('https://api.nexmo.com/v0.3/conversations/' . $ticket->capi_conversation_id . '/members', [
                 'user' => [
                     'id' => $superUser->capi_user_id,
                     'name' => Str::snake($superUser->name)
                 ]
             ]);
 
-            Vonage::post('https://api.nexmo.com/v0.3/conversations/' . $ticket->capi_conversation_id . 'members', [
+            Vonage::post('https://api.nexmo.com/v0.3/conversations/' . $ticket->capi_conversation_id . '/members', [
                 'user' => [
                     'id' => Auth::user()->capi_user_id,
                     'name' => Str::snake(Auth::user()->name)
@@ -189,6 +189,6 @@ class TicketController extends Controller
         $ticketEntry->ticket()->associate($ticket);
         $ticketEntry->save();
 
-        return view('dashboard', ['tickets' => Ticket::all()]);
+        return redirect()->route('ticket.show', $ticket->id);
     }
 }

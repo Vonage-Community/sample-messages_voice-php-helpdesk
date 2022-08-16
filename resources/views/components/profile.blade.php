@@ -51,7 +51,7 @@
                             <x-label for="notification_web" :value="__('Voice')" />
                             <x-input id="notification_voice" class="block mt-1"
                                      type="radio"
-                                     name="notification_method" value="voice" />
+                                     name="notification_method" value="voice" checked />
 
                             <x-label for="notification_sms" :value="__('SMS')" />
                             <x-input id="notification_sms" class="block mt-1"

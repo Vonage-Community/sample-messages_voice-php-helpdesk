@@ -27,6 +27,10 @@ class WebhookController extends Controller
         return response()->json([
             [
                 'action' => 'talk',
+                'text' => 'This is a message from the Vonage Helpdesk'
+            ],
+            [
+                'action' => 'talk',
                 'text' => $ticketEntry->content,
             ],
             [
@@ -49,13 +53,9 @@ class WebhookController extends Controller
     public function recording(TicketEntry $ticketEntry, Request $request)
     {
         $params = $request->all();
-
         Log::info('Recording event', $params);
 
-        $filename = Str::random(10);
         $audio = Vonage::get($params['recording_url'])->getBody();
-
-//        Storage::put('public/' . $filename . '.mp3', $audio);
         $ticketContent = $this->transcribeRecording($audio);
 
         $newTicketEntry = new TicketEntry([
@@ -99,7 +99,6 @@ class WebhookController extends Controller
         $transcription = $transcriptionResponseBody['results']['channels'][0]['alternatives'][0]['transcript'];
 
         Log::info('Voice Response', [$transcription]);
-        Storage::delete('public/' . $filename . '.mp3');
 
         return $transcription;
     }

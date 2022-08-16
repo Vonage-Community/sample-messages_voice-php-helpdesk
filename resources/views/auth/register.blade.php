@@ -75,11 +75,6 @@
                 <x-input id="notification_whatsapp" class="block mt-1"
                          type="radio"
                          name="notification_method" value="whatsapp" />
-
-                <x-label for="notification_whatsapp" :value="__('Viber')" />
-                <x-input id="notification_whatsapp" class="block mt-1"
-                         type="radio"
-                         name="notification_method" value="viber" />
             </div>
 
             <div class="flex items-center justify-end mt-4">
