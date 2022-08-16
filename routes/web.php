@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\IncomingSmsTicketController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,8 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [TicketController::class, 'index'])->name('ticket.index');
+Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+Route::post('/profile/update/{user:id}', [ProfileController::class, 'update'])->name('profile.update');
 Route::get('/tickets/create', [TicketController::class, 'create'])->name('ticket.create');
 Route::post('/tickets/create', [TicketController::class, 'store'])->name('ticket.store');
 Route::get('/tickets/show/{ticket:id}', [TicketController::class, 'show'])->name('ticket.show');
