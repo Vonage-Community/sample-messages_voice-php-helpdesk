@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Ticket;
 use App\Models\TicketEntry;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Vonage\Laravel\Facade\Vonage;
 use Vonage\Messages\Channel\SMS\SMSText;
 use Vonage\Messages\Channel\Viber\ViberText;
@@ -113,6 +115,13 @@ class TicketController extends Controller
 
     public function store(Request $request)
     {
+        // superuser cannot create a ticket
+        $superUser = User::where('email', 'admin@vonage.com')->get()->first();
+
+        if ($superUser->id === Auth::id()) {
+            return;
+        }
+
         //TODO spin this off into a validation request
         $validatedRequestData = $request->validate([
             'title' => 'required',
@@ -127,10 +136,38 @@ class TicketController extends Controller
                 'title' => $validatedRequestData['title'],
                 'status' => 'open',
                 'type' => 'realtime',
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $ticket->save();
+
+            // Get me a CAPI Instance to attach to the ticket
+            $response = Vonage::post('https://api.nexmo.com/v0.3/conversations', [
+                $ticket->id . '_chat',
+                'Ticket number ' . $ticket->id . ' Support Chat',
+                'properties' => [
+                    'ttl' => 1200
+                ]
+            ]);
+
+            $responsePayload = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+            $ticket->capi_conversation_id = $responsePayload['id'];
+            $ticket->save();
+
+            // Add the super admin and this user to the conversation
+            Vonage::post('https://api.nexmo.com/v0.3/conversations/' . $ticket->capi_conversation_id . 'members', [
+                'user' => [
+                    'id' => $superUser->capi_user_id,
+                    'name' => Str::snake($superUser->name)
+                ]
+            ]);
+
+            Vonage::post('https://api.nexmo.com/v0.3/conversations/' . $ticket->capi_conversation_id . 'members', [
+                'user' => [
+                    'id' => Auth::user()->capi_user_id,
+                    'name' => Str::snake(Auth::user()->name)
+                ]
+            ]);
 
             return redirect()->route('ticket.show', $ticket->id);
         }

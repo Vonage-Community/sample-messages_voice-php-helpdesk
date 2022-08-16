@@ -21,7 +21,8 @@ class User extends Authenticatable
         'email',
         'password',
         'phone_number',
-        'notification_method'
+        'notification_method',
+        'capi_user_id'
     ];
 
     /**

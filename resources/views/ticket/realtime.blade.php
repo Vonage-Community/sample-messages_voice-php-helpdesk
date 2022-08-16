@@ -15,15 +15,6 @@
                     </div>
 
                         <div class="panel-body">
-                            <form action={{ route('ticket.update', $ticket->id) }} method="POST" id="add-reply">
-                                @csrf
-                                <div class="form-group">
-                                    <label for="reply">Add a reply</label>
-                                    <textarea name="content" id="reply"></textarea>
-                                    <input type="hidden" name="channel" value="web">
-                                </div>
-                                <input type="submit">
-                            </form>
                         </div>
                 </div>
             </div>
