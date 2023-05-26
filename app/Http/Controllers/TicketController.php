@@ -119,7 +119,7 @@ class TicketController extends Controller
         $superUser = User::where('email', 'admin@vonage.com')->get()->first();
 
         if ($superUser->id === Auth::id()) {
-            return;
+            redirect()->route('ticket.index');
         }
 
         //TODO spin this off into a validation request
