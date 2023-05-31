@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessRecording;
 use App\Models\TicketEntry;
-use App\Models\TicketRecording;
 use GuzzleHttp\Client;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Vonage\Laravel\Facade\Vonage;
 
 class WebhookController extends Controller
 {
-    public function answer(TicketEntry $ticketEntry) {
+    public function answer(TicketEntry $ticketEntry): JsonResponse
+    {
         if (!$ticketEntry->exists) {
             return response()->json([
                 [
@@ -50,7 +51,7 @@ class WebhookController extends Controller
         ]);
     }
 
-    public function recording(TicketEntry $ticketEntry, Request $request)
+    public function recording(TicketEntry $ticketEntry, Request $request): Response|Application|ResponseFactory
     {
         $params = $request->all();
         Log::info('Recording event', $params);
@@ -72,7 +73,12 @@ class WebhookController extends Controller
         return response('', 204);
     }
 
-    public function transcribeRecording($audio)
+    public function transcribeRecordingOpenAi($audio)
+    {
+
+    }
+
+    public function transcribeRecordingDeepgram($audio)
     {
         $client = new Client([
             'base_uri' => 'https://api.deepgram.com/v1/'
