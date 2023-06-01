@@ -83,7 +83,7 @@ class WebhookController extends Controller
             'base_uri' => 'https://api.openai.com/v1/',
         ]);
 
-        $audioPath = Storage::path('call_recordings.mp3');
+        $audioPath = Storage::path('call_recording.mp3');
 
         $multipart = new MultipartStream([
             [
