@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\TicketEntry;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\MultipartStream;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Vonage\Laravel\Facade\Vonage;
 
 class WebhookController extends Controller
@@ -42,7 +44,7 @@ class WebhookController extends Controller
                 'action'    => 'record',
                 'endOnKey'  => '#',
                 'beepStart' => true,
-                'eventUrl' => [env('PUBLIC_URL') . '/webhook/recordings/' .  $ticketEntry->id]
+                'eventUrl' => [config('helpdesk.public_url') . '/webhook/recordings/' .  $ticketEntry->id]
             ],
             [
                 'action' => 'talk',
@@ -56,8 +58,10 @@ class WebhookController extends Controller
         $params = $request->all();
         Log::info('Recording event', $params);
 
-        $audio = Vonage::get($params['recording_url'])->getBody();
-        $ticketContent = $this->transcribeRecording($audio);
+        $audio = Vonage::voice()->getRecording($params['recording_url']);
+        Storage::put('call_recording.mp3', $audio);
+
+        $ticketContent = $this->transcribeRecordingOpenAi();
 
         $newTicketEntry = new TicketEntry([
             'content' => $ticketContent,
@@ -73,11 +77,44 @@ class WebhookController extends Controller
         return response('', 204);
     }
 
-    public function transcribeRecordingOpenAi($audio)
+    public function transcribeRecordingOpenAi()
     {
+        $client = new Client([
+            'base_uri' => 'https://api.openai.com/v1/',
+        ]);
 
+        $audioPath = Storage::path('call_recordings.mp3');
+
+        $multipart = new MultipartStream([
+            [
+                'name'     => 'file',
+                'contents' => fopen($audioPath, 'rb'),
+                'filename' => basename($audioPath),
+            ],
+            [
+                'name'     => 'model',
+                'contents' => 'whisper-1',
+            ],
+        ]);
+
+        $response = $client->request('POST', 'audio/transcriptions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . config('helpdesk.open_ai_secret'),
+                'Content-Type'   => 'multipart/form-data; boundary=' . $multipart->getBoundary(),
+            ],
+            'body' => $multipart,
+        ]);
+
+        Storage::delete('call_recording.mp3');
+
+        $responseBody = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+
+        return $responseBody['text'];
     }
 
+    /**
+     * @deprecated in favour of OpenAI
+     */
     public function transcribeRecordingDeepgram($audio)
     {
         $client = new Client([

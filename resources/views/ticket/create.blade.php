@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12 px-8">
         <div class="container">
             <div class="row">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -21,7 +21,7 @@
                                 </ul>
                             </div>
                         @endif
-                        <form method="POST" action="{{ route('ticket.create') }}">
+                        <form method="POST" action="{{ route('ticket.create') }}" class="w-full">
                             @csrf
                                 <fieldset>
                                     <label for="title">Title</label>
@@ -34,7 +34,9 @@
                                     <label for="isConversation">In-App Messaging</label>
                                     <input type="checkbox" id="isConversation" name="isConversation">
                                 </fieldset>
-                                <input type="submit">
+                                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                    <input type="submit">
+                                </button>
                         </form>
                     </div>
                 </div>

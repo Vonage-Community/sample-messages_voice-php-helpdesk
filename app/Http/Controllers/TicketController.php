@@ -94,17 +94,17 @@ class TicketController extends Controller
             }
 
             if ($userTicket->notification_method === 'voice') {
-                $currentHost = env('PUBLIC_URL', url('/'));
+                $currentHost = config('helpdesk.public_url');
                 $outboundCall = new OutboundCall(
                     new Phone($userTicket->phone_number),
                     new Phone(config('vonage.sms_from'))
                 );
                 $outboundCall
                     ->setAnswerWebhook(
-                        new Webhook($currentHost . '/webhook/answer/' . $ticketEntry->id)
+                        new Webhook($currentHost . '/webhook/answer/' . $ticketEntry->id, Webhook::METHOD_GET)
                     )
                     ->setEventWebhook(
-                        new Webhook($currentHost . '/webhook/event/' . $ticketEntry->id)
+                        new Webhook($currentHost . '/webhook/event/' . $ticketEntry->id, Webhook::METHOD_POST)
                     );
                 Vonage::voice()->createOutboundCall($outboundCall);
             }
